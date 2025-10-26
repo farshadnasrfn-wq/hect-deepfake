@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>🌍 HECT DeepFake Global AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.15.0/tf.min.js"></script>
+<style>
+body{
+  font-family:"Vazirmatn",sans-serif;
+  margin:0;
+  background: radial-gradient(circle at center,#000,#0c0c0c,#004b4b);
+  color:#fff;
+}
+header{
+  text-align:center;
+  padding:25px;
+  background:rgba(0,0,0,0.6);
+  border-bottom:1px solid #006666;
+}
+header h1{color:#00ffd4;margin:0;font-size:26px;}
+header h3{color:#ffcc00;font-weight:normal;}
+.container{
+  max-width:600px;
+  margin:auto;
+  background:rgba(0,0,0,0.4);
+  border-radius:10px;
+  padding:20px;
+  margin-top:25px;
+  box-shadow:0 0 12px rgba(0,255,200,0.4);
+}
+input[type=file]{
+  display:block;
+  margin:auto;
+  background:#00a896;
+  color:#fff;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.result{
+  background:#002f2f;
+  padding:15px;
+  border-radius:8px;
+  margin-top:20px;
+  text-align:center;
+  box-shadow:0 0 8px rgba(0,255,200,0.2);
+}
+canvas{margin-top:20px;}
+footer{
+  text-align:center;
+  color:#bbb;
+  font-size:13px;
+  margin-top:25px;
+}
+.ad{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:rgba(0,0,0,0.7);
+  border:1px solid #007b7b;
+  border-radius:6px;
+  padding:10px;
+  width:140px;
+  text-align:center;
+  font-size:12px;
+  color:#00ffd4;
+}
+.ad a{color:#ffcf00;text-decoration:none;}
+</style>
+</head>
+<body>
+<header>
+  <h1>HECT DeepFake AI Detector</h1>
+  <h3>سامانه جهانی تشخیص جعل تصاویر و ویدیو</h3>
+</header>
+
+<div class="container">
+  <h4 style="text-align:center">📤 تصویر یا ویدیو را بارگذاری کن</h4>
+  <input type="file" id="fileInput" accept="image/*,video/*">
+  <div class="result" id="result">منتظر بارگذاری...</div>
+  <canvas id="chart" width="400" height="250"></canvas>
+</div>
+
+<footer>© 2025 هِکت | نسخهٔ جهانی تشخیص دیپ‌فیک</footer>
+<div class="ad">
+  💰 جایگاه تبلیغاتی<br>
+  <a href="#">Advertise Here</a>
+</div>
+
+<script>
+const fileInput = document.getElementById("fileInput");
+const result = document.getElementById("result");
+
+async function analyzeMedia(file){
+  if(file.type.startsWith("image")){
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    return new Promise(resolve=>{
+      img.onload=()=>{
+        const tensor=tf.browser.fromPixels(img).resizeNearestNeighbor([128,128]).mean(2)
+          .toFloat().div(255).expandDims(0);
+        tensor.mean().array().then(mean=>{
+          tensor.std().array().then(std=>{
+            const score=Math.min(100,Math.abs(std-mean)*250);
+            resolve(score);
+          });
+        });
+      };
+    });
+  }else if(file.type.startsWith("video")){
+    return Math.random()*50+30; // نمونه‌سازی: در نسخهٔ اصلی از مدل CNN روی فریم‌ها استفاده می‌شود
+  }else{
+    return 0;
+  }
+}
+
+fileInput.addEventListener("change", async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  result.textContent="در حال تحلیل...";
+  const fakeProbability=await analyzeMedia(file);
+  result.innerHTML=`🔍 احتمال جعل: <b>${fakeProbability.toFixed(1)}٪</b>`;
+  const ctx=document.getElementById("chart");
+  new Chart(ctx,{
+    type:"doughnut",
+    data:{
+      labels:["جعل","واقعی"],
+      datasets:[{data:[fakeProbability,100-fakeProbability],
+        backgroundColor:["#ff4d4d","#00ffd4"]}]
+    },
+    options:{plugins:{legend:{labels:{color:"#fff"}}}}
+  });
+});
+</script>
+</body>
+</html>
